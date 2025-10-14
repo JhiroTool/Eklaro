@@ -1,6 +1,8 @@
 <?php
 $pageTitle = 'Validation Results - Eklaro';
 require_once 'includes/header.php';
+require_once 'includes/NLPAnalyzer.php';
+require_once 'includes/FactCheckAPI.php';
 require_once 'includes/ArticleValidator.php';
 
 use Eklaro\ArticleValidator;
@@ -120,7 +122,18 @@ if ($result['credibility_score'] >= SCORE_VALID_MIN) {
                             <strong class="text-capitalize"><?php echo str_replace('_', ' ', $claim['claim_type']); ?></strong>
                             <span class="badge bg-secondary"><?php echo round($claim['confidence_score']); ?>% confidence</span>
                         </div>
-                        <p class="mb-0 small"><?php echo htmlspecialchars($claim['claim_text']); ?></p>
+                        <p class="mb-0 small"><?php 
+                            // Clean the claim text - remove URLs and excessive whitespace
+                            $claimText = $claim['claim_text'];
+                            $claimText = preg_replace('/https?:\/\/[^\s]+/', '', $claimText); // Remove URLs
+                            $claimText = preg_replace('/\s+/', ' ', $claimText); // Clean whitespace
+                            $claimText = trim($claimText);
+                            // Limit length
+                            if (strlen($claimText) > 200) {
+                                $claimText = substr($claimText, 0, 200) . '...';
+                            }
+                            echo htmlspecialchars($claimText); 
+                        ?></p>
                     </div>
                     <?php endforeach; ?>
                 </div>
@@ -202,7 +215,17 @@ if ($result['credibility_score'] >= SCORE_VALID_MIN) {
                     </h5>
                 </div>
                 <div class="card-body">
-                    <p style="white-space: pre-line;"><?php echo htmlspecialchars($result['content']); ?></p>
+                    <p style="white-space: pre-wrap; word-wrap: break-word;"><?php 
+                        // Clean and format the content
+                        $content = $result['content'];
+                        // Remove excessive whitespace
+                        $content = preg_replace('/\s+/', ' ', $content);
+                        // Limit length for display
+                        if (strlen($content) > 5000) {
+                            $content = substr($content, 0, 5000) . '...';
+                        }
+                        echo htmlspecialchars($content); 
+                    ?></p>
                     <?php if ($result['source_url']): ?>
                     <hr>
                     <p class="mb-0">

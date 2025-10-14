@@ -84,13 +84,27 @@ class ArticleValidator {
              VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
         );
         
-        $nlpJson = json_encode($nlpAnalysis);
-        $factCheckJson = json_encode($factCheckResults);
-        $linguisticJson = json_encode($nlpAnalysis['linguistic_features']);
-        $metadataJson = json_encode(['credibility_indicators' => $nlpAnalysis['credibility_indicators']]);
+        $nlpJson = json_encode($nlpAnalysis, JSON_UNESCAPED_UNICODE | JSON_PARTIAL_OUTPUT_ON_ERROR);
+        $factCheckJson = json_encode($factCheckResults, JSON_UNESCAPED_UNICODE | JSON_PARTIAL_OUTPUT_ON_ERROR);
+        $linguisticJson = json_encode($nlpAnalysis['linguistic_features'] ?? [], JSON_UNESCAPED_UNICODE | JSON_PARTIAL_OUTPUT_ON_ERROR);
+        $metadataJson = json_encode(['credibility_indicators' => $nlpAnalysis['credibility_indicators'] ?? []], JSON_UNESCAPED_UNICODE | JSON_PARTIAL_OUTPUT_ON_ERROR);
+        
+        // Validate JSON encoding
+        if ($nlpJson === false) {
+            throw new \Exception('Failed to encode NLP analysis: ' . json_last_error_msg());
+        }
+        if ($factCheckJson === false) {
+            throw new \Exception('Failed to encode fact check results: ' . json_last_error_msg());
+        }
+        if ($linguisticJson === false) {
+            throw new \Exception('Failed to encode linguistic features: ' . json_last_error_msg());
+        }
+        if ($metadataJson === false) {
+            throw new \Exception('Failed to encode metadata: ' . json_last_error_msg());
+        }
         
         $stmt->bind_param(
-            "idsssss",
+            "idssssss",
             $articleId,
             $score,
             $label,
@@ -101,7 +115,10 @@ class ArticleValidator {
             $explanation
         );
         
-        $stmt->execute();
+        if (!$stmt->execute()) {
+            throw new \Exception('Database error: ' . $stmt->error);
+        }
+        
         return $this->db->lastInsertId();
     }
     
@@ -115,7 +132,10 @@ class ArticleValidator {
         );
         
         foreach ($claims as $claim) {
-            $claimText = $claim['context'];
+            // Clean the text to remove problematic UTF-8 characters
+            $claimText = mb_convert_encoding($claim['context'], 'UTF-8', 'UTF-8');
+            $claimText = preg_replace('/[\x00-\x1F\x7F]/u', '', $claimText); // Remove control characters
+            
             $confidenceScore = 75.0; // Default confidence
             $claimType = $claim['type'];
             $positionStart = $claim['position'];

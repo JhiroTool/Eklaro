@@ -39,6 +39,16 @@ $isAdminPage = (strpos($scriptName, '/admin/') !== false);
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
     
+    <!-- PDF.js for client-side PDF text extraction -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script>
+        // Configure PDF.js worker
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    </script>
+    
+    <!-- Mammoth.js for client-side DOCX text extraction -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+    
     <!-- Custom CSS -->
     <link rel="stylesheet" href="<?php echo APP_URL; ?>/assets/css/style.css">
     <link rel="stylesheet" href="<?php echo APP_URL; ?>/assets/css/enhancements.css">
