@@ -1,0 +1,23 @@
+{
+    "name": "eklaro/misinformation-detector",
+    "description": "AI-Powered Misinformation Detection Platform",
+    "type": "project",
+    "require": {
+        "php": ">=7.4",
+        "ext-mysqli": "*",
+        "ext-json": "*",
+        "ext-curl": "*",
+        "ext-mbstring": "*"
+    },
+    "autoload": {
+        "psr-4": {
+            "Eklaro\\": "includes/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Eklaro Team"
+        }
+    ],
+    "minimum-stability": "stable"
+}
