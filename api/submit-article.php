@@ -17,6 +17,27 @@ session_start();
 $auth = new Auth();
 $db = Database::getInstance();
 
+// Check if user is logged in
+$isLoggedIn = $auth->isLoggedIn();
+
+// For guest users, check validation limit (3 free validations)
+if (!$isLoggedIn) {
+    // Initialize guest validation counter
+    if (!isset($_SESSION['guest_validations'])) {
+        $_SESSION['guest_validations'] = 0;
+    }
+    
+    // Check if limit exceeded
+    if ($_SESSION['guest_validations'] >= 3) {
+        echo json_encode([
+            'success' => false, 
+            'message' => 'You have reached the limit of 3 free validations. Please register or login to continue.',
+            'require_login' => true
+        ]);
+        exit;
+    }
+}
+
 // Validate CSRF token
 if (!isset($_POST['csrf_token']) || !$auth->validateCSRFToken($_POST['csrf_token'])) {
     echo json_encode(['success' => false, 'message' => 'Invalid CSRF token']);
@@ -136,11 +157,18 @@ try {
         throw new Exception($result['message']);
     }
     
+    // Increment guest validation counter
+    if (!$isLoggedIn) {
+        $_SESSION['guest_validations']++;
+        $remainingValidations = 3 - $_SESSION['guest_validations'];
+    }
+    
     echo json_encode([
         'success' => true,
         'article_id' => $articleId,
         'credibility_score' => $result['credibility_score'],
-        'credibility_label' => $result['credibility_label']
+        'credibility_label' => $result['credibility_label'],
+        'guest_validations_remaining' => !$isLoggedIn ? $remainingValidations : null
     ]);
     
 } catch (Exception $e) {

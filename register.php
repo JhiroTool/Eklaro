@@ -1,6 +1,13 @@
 <?php
-$pageTitle = 'Register - Eklaro';
-require_once 'includes/header.php';
+// Start session and load dependencies BEFORE any output
+session_start();
+require_once 'config/config.php';
+require_once 'includes/Database.php';
+require_once 'includes/Auth.php';
+
+use Eklaro\Auth;
+
+$auth = new Auth();
 
 // Redirect if already logged in
 if ($auth->isLoggedIn()) {
@@ -11,6 +18,7 @@ if ($auth->isLoggedIn()) {
 $error = '';
 $success = '';
 
+// Handle registration form submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $email = $_POST['email'] ?? '';
     $password = $_POST['password'] ?? '';
@@ -33,6 +41,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 }
+
+// Now include header (after all redirects are done)
+$pageTitle = 'Register - Eklaro';
+require_once 'includes/header.php';
 ?>
 
 <div class="container py-5">

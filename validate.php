@@ -9,6 +9,21 @@ require_once 'includes/header.php';
             <!-- Alert Container -->
             <div id="alertContainer"></div>
             
+            <?php
+            // Show guest validation limit banner
+            if (!$auth->isLoggedIn()):
+                $guestValidations = $_SESSION['guest_validations'] ?? 0;
+                $remainingValidations = 3 - $guestValidations;
+            ?>
+            <div class="alert alert-info alert-dismissible fade show mb-4" role="alert">
+                <i data-lucide="info" class="icon-sm"></i>
+                <strong>Guest User:</strong> You have <strong><?php echo $remainingValidations; ?></strong> free validation<?php echo $remainingValidations != 1 ? 's' : ''; ?> remaining. 
+                <a href="<?php echo APP_URL; ?>/register" class="alert-link">Register</a> or 
+                <a href="<?php echo APP_URL; ?>/login" class="alert-link">Login</a> for unlimited validations!
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            <?php endif; ?>
+            
             <!-- Page Header -->
             <div class="text-center mb-5">
                 <div class="mb-4">
@@ -244,10 +259,26 @@ document.addEventListener('DOMContentLoaded', function() {
                 EklaroApp.hideLoading();
                 
                 if (data.success) {
-                    // Redirect to results page
-                    window.location.href = '<?php echo APP_URL; ?>/results?id=' + data.article_id;
+                    // Show remaining validations for guests
+                    if (data.guest_validations_remaining !== null && data.guest_validations_remaining >= 0) {
+                        if (data.guest_validations_remaining === 0) {
+                            showLimitModal('last');
+                        } else {
+                            EklaroApp.showAlert(`Validation successful! You have ${data.guest_validations_remaining} free validation(s) remaining.`, 'info');
+                        }
+                    }
+                    
+                    // Redirect to results page after a short delay
+                    setTimeout(() => {
+                        window.location.href = '<?php echo APP_URL; ?>/results?id=' + data.article_id;
+                    }, data.guest_validations_remaining !== null && data.guest_validations_remaining === 0 ? 3000 : 1500);
                 } else {
-                    EklaroApp.showAlert(data.message || 'Validation failed', 'danger');
+                    // Check if login is required
+                    if (data.require_login) {
+                        showLimitModal('exceeded');
+                    } else {
+                        EklaroApp.showAlert(data.message || 'Validation failed', 'danger');
+                    }
                 }
             })
             .catch(error => {
@@ -264,7 +295,112 @@ document.addEventListener('DOMContentLoaded', function() {
             lucide.createIcons();
         });
     });
+    
+    // Show limit modal with blur effect
+    function showLimitModal(type) {
+        const modalHTML = `
+            <div id="limitModal" class="limit-modal-overlay">
+                <div class="limit-modal">
+                    <div class="limit-modal-icon">
+                        ${type === 'exceeded' ? 
+                            '<i data-lucide="lock" class="icon-xxl text-warning"></i>' : 
+                            '<i data-lucide="alert-circle" class="icon-xxl text-info"></i>'}
+                    </div>
+                    <h3 class="mb-3">${type === 'exceeded' ? 
+                        'Validation Limit Reached' : 
+                        'Last Free Validation Used!'}</h3>
+                    <p class="text-muted mb-4">
+                        ${type === 'exceeded' ? 
+                            'You have reached the limit of <strong>3 free validations</strong>. Create an account to continue validating articles with unlimited access!' :
+                            'This was your <strong>last free validation</strong>! Register now to get unlimited validations and save your validation history.'}
+                    </p>
+                    <div class="d-grid gap-2">
+                        <a href="<?php echo APP_URL; ?>/register" class="btn btn-primary btn-lg">
+                            <i data-lucide="user-plus" class="icon-sm"></i> Create Free Account
+                        </a>
+                        <a href="<?php echo APP_URL; ?>/login" class="btn btn-outline-primary">
+                            <i data-lucide="log-in" class="icon-sm"></i> Already have an account? Login
+                        </a>
+                        ${type === 'last' ? '<button onclick="closeLimitModal()" class="btn btn-link text-muted">Continue to Results</button>' : ''}
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        document.body.insertAdjacentHTML('beforeend', modalHTML);
+        lucide.createIcons();
+        
+        // Prevent body scroll
+        document.body.style.overflow = 'hidden';
+    }
+    
+    // Close limit modal
+    window.closeLimitModal = function() {
+        const modal = document.getElementById('limitModal');
+        if (modal) {
+            modal.remove();
+            document.body.style.overflow = '';
+        }
+    };
 });
 </script>
+
+<style>
+.limit-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    animation: fadeIn 0.3s ease-out;
+}
+
+.limit-modal {
+    background: white;
+    border-radius: 16px;
+    padding: 3rem 2rem;
+    max-width: 500px;
+    width: 90%;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    text-align: center;
+    animation: slideUp 0.3s ease-out;
+}
+
+.limit-modal-icon {
+    margin-bottom: 1.5rem;
+}
+
+.icon-xxl {
+    width: 80px;
+    height: 80px;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateY(30px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+</style>
 
 <?php require_once 'includes/footer.php'; ?>

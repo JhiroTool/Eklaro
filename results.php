@@ -106,6 +106,109 @@ if ($result['credibility_score'] >= SCORE_VALID_MIN) {
                 </div>
             </div>
             
+            <!-- Improvement Recommendations -->
+            <?php
+            $credibilityScore = $result['credibility_score'];
+            $readabilityScore = $result['nlp_analysis']['readability_score'];
+            $wordCount = $result['linguistic_features']['word_count'];
+            $sentenceCount = $result['linguistic_features']['sentence_count'];
+            $avgSentenceLength = $result['linguistic_features']['avg_sentence_length'];
+            $suspiciousCount = count($result['suspicious_claims']);
+            
+            // Generate recommendations
+            $recommendations = [];
+            
+            // Credibility recommendations
+            if ($credibilityScore < 70) {
+                $recommendations[] = [
+                    'icon' => 'shield-check',
+                    'title' => 'Boost Credibility',
+                    'color' => 'warning',
+                    'tips' => [
+                        '<strong>Add Verified Citations:</strong> Reference peer-reviewed journals, government reports, or reputable organizations (e.g., WHO, UN, academic databases).',
+                        '<strong>Use Specific Data:</strong> Replace general claims with statistics or findings from studies.',
+                        '<strong>Clarify Source Attribution:</strong> Ensure every claim is traceable to a source using APA or IEEE format.'
+                    ]
+                ];
+            }
+            
+            // Readability recommendations
+            if ($readabilityScore < 50) {
+                $recommendations[] = [
+                    'icon' => 'book-open',
+                    'title' => 'Improve Readability',
+                    'color' => 'info',
+                    'tips' => [
+                        '<strong>Shorten Sentences:</strong> Aim for 12–15 words per sentence. Break complex ideas into digestible parts.',
+                        '<strong>Simplify Vocabulary:</strong> Use precise but accessible language (e.g., "improve" instead of "ameliorate").',
+                        '<strong>Use Active Voice:</strong> Change "The system was developed" to "We developed the system".',
+                        '<strong>Add Transitions:</strong> Use connectors like "however," "in contrast," "as a result" to guide readers.'
+                    ]
+                ];
+            }
+            
+            // Linguistic structure recommendations
+            if ($avgSentenceLength < 10 || $avgSentenceLength > 25) {
+                $recommendations[] = [
+                    'icon' => 'type',
+                    'title' => 'Refine Linguistic Structure',
+                    'color' => 'success',
+                    'tips' => [
+                        '<strong>Sentence Length:</strong> Your average is ' . round($avgSentenceLength, 1) . ' words/sentence. ' . 
+                        ($avgSentenceLength < 10 ? 'Combine related short sentences to improve flow.' : 'Break down longer sentences for clarity.'),
+                        '<strong>Vary Structure:</strong> Mix simple, compound, and complex sentence forms for better rhythm.',
+                        '<strong>Use Topic Sentences:</strong> Start each paragraph with a clear main idea to anchor your points.'
+                    ]
+                ];
+            }
+            
+            // Suspicious claims recommendations
+            if ($suspiciousCount > 5) {
+                $recommendations[] = [
+                    'icon' => 'alert-triangle',
+                    'title' => 'Address Suspicious Claims',
+                    'color' => 'danger',
+                    'tips' => [
+                        '<strong>Review Flagged Content:</strong> You have ' . $suspiciousCount . ' suspicious claims detected. Review each one carefully.',
+                        '<strong>Provide Evidence:</strong> Support claims with credible sources and data.',
+                        '<strong>Avoid Exaggeration:</strong> Replace absolute terms like "always," "never," "everyone" with more measured language.',
+                        '<strong>Be Objective:</strong> Remove emotional or sensational language that may undermine credibility.'
+                    ]
+                ];
+            }
+            ?>
+            
+            <?php if (!empty($recommendations)): ?>
+            <div class="card shadow-sm mb-4 border-start border-4 border-primary">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0 text-primary">
+                        <i data-lucide="lightbulb" class="icon-sm"></i>
+                        💡 Recommendations to Improve Your Article
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <?php foreach ($recommendations as $index => $rec): ?>
+                    <div class="mb-4 <?php echo $index < count($recommendations) - 1 ? 'pb-4 border-bottom' : ''; ?>">
+                        <h6 class="text-<?php echo $rec['color']; ?> mb-3">
+                            <i data-lucide="<?php echo $rec['icon']; ?>" class="icon-sm"></i>
+                            <?php echo $rec['title']; ?>
+                        </h6>
+                        <ul class="mb-0">
+                            <?php foreach ($rec['tips'] as $tip): ?>
+                            <li class="mb-2"><?php echo $tip; ?></li>
+                            <?php endforeach; ?>
+                        </ul>
+                    </div>
+                    <?php endforeach; ?>
+                    
+                    <div class="alert alert-info mb-0 mt-4">
+                        <i data-lucide="info" class="icon-sm"></i>
+                        <strong>Pro Tip:</strong> After making improvements, validate your article again to see your updated credibility score!
+                    </div>
+                </div>
+            </div>
+            <?php endif; ?>
+            
             <!-- Suspicious Claims -->
             <?php if (!empty($result['suspicious_claims'])): ?>
             <div class="card shadow-sm mb-4">
