@@ -1,5 +1,5 @@
 <?php
-// Script to fix user passwords
+// Script to fix user passwords HAHHAH
 
 require_once 'config/config.php';
 require_once 'includes/Database.php';
