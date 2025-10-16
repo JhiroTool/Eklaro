@@ -173,10 +173,19 @@ class ArticleValidator {
                 foreach ($match['reviews'] as $review) {
                     $claim = $result['claim'];
                     $rating = $review['rating'];
+                    if (!empty($rating) && strlen($rating) > 100) {
+                        $rating = substr($rating, 0, 100);
+                    }
                     $sourceName = $review['title'];
                     $sourceUrl = $review['url'];
                     $publisher = $review['publisher'];
                     $reviewDate = $review['reviewDate'];
+                    if (!empty($reviewDate)) {
+                        $timestamp = strtotime($reviewDate);
+                        $reviewDate = $timestamp ? date('Y-m-d H:i:s', $timestamp) : null;
+                    } else {
+                        $reviewDate = null;
+                    }
                     
                     $stmt->bind_param(
                         "issssss",

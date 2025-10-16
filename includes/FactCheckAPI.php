@@ -149,6 +149,11 @@ class FactCheckAPI {
     private function logAPIUsage($apiName, $endpoint, $requestData, $response, $responseTime) {
         $responseStatus = $response['http_code'] ?? null;
         $errorMessage = $response['error'] ?? null;
+
+        // Prevent oversized endpoint strings from breaking DB inserts
+        if (strlen($endpoint) > 255) {
+            $endpoint = substr($endpoint, 0, 255);
+        }
         
         $stmt = $this->db->prepare(
             "INSERT INTO api_usage_logs (api_name, endpoint, request_data, response_status, response_time_ms, error_message) 
