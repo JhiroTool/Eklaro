@@ -61,7 +61,8 @@ class FactCheckAPI {
         $claimIndicators = [
             'is', 'are', 'was', 'were', 'has', 'have', 'will',
             'study', 'research', 'report', 'according', 'said',
-            'announced', 'discovered', 'found', 'revealed'
+            'announced', 'discovered', 'found', 'revealed',
+            'claims', 'evidence', 'study shows', 'experts', 'official', 'confirms'
         ];
         
         foreach ($sentences as $sentence) {
@@ -72,14 +73,18 @@ class FactCheckAPI {
             foreach ($claimIndicators as $indicator) {
                 if (strpos($lowerSentence, $indicator) !== false) {
                     // Only add sentences with reasonable length
-                    if (strlen($sentence) > 20 && strlen($sentence) < 200) {
+                    if (strlen($sentence) > 10 && strlen($sentence) < 220) {
                         $claims[] = $sentence;
                         break;
                     }
                 }
             }
         }
-        
+
+        if (empty($claims) && strlen($text) > 50) {
+            $claims[] = substr($text, 0, 150);
+        }
+
         // Limit to top 5 claims to avoid API quota issues
         return array_slice($claims, 0, 5);
     }

@@ -249,7 +249,7 @@ class ArticleValidator {
     
     public function getValidationResult($articleId) {
         $stmt = $this->db->prepare(
-            "SELECT vr.*, a.title, a.content, a.source_url 
+            "SELECT vr.*, a.title, a.content, a.source_url, a.user_id 
              FROM validation_results vr 
              JOIN articles a ON vr.article_id = a.id 
              WHERE vr.article_id = ? 

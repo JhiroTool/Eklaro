@@ -1,11 +1,17 @@
 <?php
 $pageTitle = 'Validation Results - Eklaro';
-require_once 'includes/header.php';
+require_once 'config/config.php';
+require_once 'includes/Database.php';
+require_once 'includes/Auth.php';
 require_once 'includes/NLPAnalyzer.php';
 require_once 'includes/FactCheckAPI.php';
 require_once 'includes/ArticleValidator.php';
 
 use Eklaro\ArticleValidator;
+use Eklaro\Auth;
+
+$auth = new Auth();
+$auth->requireLogin();
 
 // Get article ID
 $articleId = isset($_GET['id']) ? (int)$_GET['id'] : 0;
@@ -18,6 +24,18 @@ if ($articleId === 0) {
 // Get validation results
 $validator = new ArticleValidator();
 $result = $validator->getValidationResult($articleId);
+if ($result) {
+    $isAdmin = $auth->isAdmin();
+    $currentUser = $auth->getCurrentUser();
+    $ownsArticle = $currentUser && $result['user_id'] && $currentUser['id'] === (int)$result['user_id'];
+
+    if (!$isAdmin && !$ownsArticle) {
+        header('Location: ' . APP_URL . '/403');
+        exit;
+    }
+}
+
+require_once 'includes/header.php';
 
 if (!$result) {
     echo '<div class="container py-5"><div class="alert alert-danger">Article not found or validation pending.</div></div>';
